@@ -5,27 +5,24 @@ from matplotlib.animation import FuncAnimation
 
 class NBody:
     G = 1
-    N = 0
     mass = pos = vel = None
     rng = np.random.default_rng()
     scat = fig = ax = ani = None
-    times=0
+    N = 0
 
-    def __init__(self, n):
-        self.N = n
-        self.mass = np.array(self.rng.uniform(low=100, high=200, size=n))
-        self.pos = np.empty((n,2))
-        self.vel = np.empty((n,2))
-        for i in range(self.N):
-            self.pos[i] = self.rng.uniform(low=-30.0, high=30.0, size=2)
-            self.vel[i] = self.rng.uniform(low=-3.0, high=3.0, size=2)
-
-        self.init_plot()
+    def __init__(self):
+        self.mass = np.array([])
+        self.pos = np.array([[]])
+        self.vel = np.array([[]])
 
     def init_plot(self):
-        self.fig, self.ax = plt.subplots(figsize=(6,6))
-        self.scat = plt.scatter(self.pos[:, 0], self.pos[:, 1], s=self.mass/2-40)
+        plt.style.use('dark_background')
 
+        self.fig, self.ax = plt.subplots(figsize=(8, 8))
+        self.scat = plt.scatter(self.pos[:, 0], self.pos[:, 1], s=np.log10(self.mass), c=self.rng.random((self.N, 3)))
+        #self.scat = plt.scatter(self.pos[:, 0], self.pos[:, 1], s=1, c=self.rng.random((self.N, 3)))
+
+        self.ax.set_axis_off()
         self.ax.set_aspect('equal')
         self.ax.set_xlim(-100, 100)
         self.ax.set_ylim(-100, 100)
@@ -49,9 +46,41 @@ class NBody:
         self.scat.set_offsets(self.pos)
         return [self.scat]
 
+    def create_body(self, mass, pos, vel):
+        self.N += 1
+        pos = np.array([pos])
+        vel = np.array([vel])
+        self.mass = np.append(self.mass, mass)
+        if self.pos.size == 0:
+            self.pos = np.array(pos)
+            self.vel = np.array(vel)
+            return
+        self.pos = np.append(self.pos, pos, axis=0)
+        self.vel = np.append(self.vel, vel, axis=0)
+
+    def create_galaxy(self, n, rad):
+        center = 1000000
+        self.create_body(center, np.array([0,0]), np.array([0,0]))
+
+        for i in range(n - 1):
+            mass = self.rng.uniform(low=200, high=500)
+
+            r = self.rng.random() * rad
+            theta = self.rng.uniform(0, 2 * np.pi)
+            x, y = r * math.cos(theta), r * math.sin(theta)
+            pos = np.array([x,y])
+
+            vel = np.array([math.cos(theta+np.pi/2),math.sin(theta+np.pi/2)]) * math.sqrt(self.G * center / r)
+
+            self.create_body(mass, pos, vel)
+
+
     def main(self):
+        self.init_plot()
         self.ani = FuncAnimation(plt.gcf(), func=self.update, frames=1000, interval=1, blit=True)
         plt.show()
 
-nbody = NBody(20)
+nbody = NBody()
+nbody.create_galaxy(100, 30)
+print(nbody.pos)
 nbody.main()
