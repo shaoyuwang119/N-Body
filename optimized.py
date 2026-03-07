@@ -22,7 +22,7 @@ class NBody:
         plt.style.use('dark_background')
 
         self.fig, self.ax = plt.subplots(figsize=(8, 8))
-        self.scat = plt.scatter(self.pos[:, 0], self.pos[:, 1], s=np.log10(self.mass)/2, c=self.rng.random((self.N, 3)))
+        self.scat = plt.scatter(self.pos[:, 0], self.pos[:, 1], s=np.log10(self.mass), c=self.rng.random((self.N, 3)))
         #self.scat = plt.scatter(self.pos[:, 0], self.pos[:, 1], s=1, c=self.rng.random((self.N, 3)))
 
         self.ax.set_axis_off()
@@ -30,10 +30,10 @@ class NBody:
         self.ax.set_xlim(-128, 128)
         self.ax.set_ylim(-128, 128)
 
-    def step(self, t, eps=1.0):
+    def step(self, t):
         r = self.pos[None, :, :] - self.pos[:, None, :]  # 3d (N,N,2)
 
-        dist2 = np.sum(r**2, axis=2) + eps # 2d (N,N)
+        dist2 = np.sum(r**2, axis=2) + 0.3 # 2d (N,N)
         inv_dist3 = dist2 ** (-1.5) # 2d (N,N)
 
         np.fill_diagonal(inv_dist3, 0)
@@ -45,7 +45,7 @@ class NBody:
         self.pos += self.vel * t
 
     def update(self, frame):
-        self.step(0.002)
+        self.step(0.01)
         self.scat.set_offsets(self.pos)
         return [self.scat]
 
@@ -65,10 +65,10 @@ class NBody:
         self.create_body(c_mass, center, np.array([0,0]))
 
         for i in range(n - 1):
-            mass = self.rng.uniform(low=100, high=500)
+            mass = self.rng.uniform(low=200, high=400)
+
             r = self.rng.random() * rad
             theta = self.rng.uniform(0, 2 * np.pi)
-
             x, y = r * math.cos(theta), r * math.sin(theta)
             pos = np.array(center + [x,y])
 
@@ -78,11 +78,12 @@ class NBody:
             self.create_body(mass, pos, vel)
 
 
-    def main(self, t):
+    def main(self):
         self.init_plot()
-        self.ani = FuncAnimation(plt.gcf(), func=self.update, frames=1000, interval=t)
+        self.ani = FuncAnimation(plt.gcf(), func=self.update, frames=1000, interval=10, blit=True)
         plt.show()
 
 nbody = NBody()
-nbody.create_galaxy(600, 20, np.array([0,40]), 1e8)
-nbody.main(1)
+nbody.create_galaxy(100, 60, np.array([0,0]), 200000)
+#nbody.create_galaxy(40, 30, np.array([0, 20]), 50000)
+nbody.main()
